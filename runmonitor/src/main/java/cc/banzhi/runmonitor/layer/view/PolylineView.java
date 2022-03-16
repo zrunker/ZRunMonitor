@@ -225,15 +225,27 @@ public class PolylineView extends SurfaceView
     public synchronized void addPolyline(PolylineBean data) {
         // 分段数目
         int sectionNum = 10;
+//        if (list.size() > sectionNum) {
+//            list.remove(0);
+//        }
+//        list.add(data);
+//        int width = getMeasuredWidth();
+//        int size = list.size();
+//        for (int i = 0; i < size; i++) {
+//            PolylineBean item = list.get(i);
+//            item.x = (int) (width * (i * 1.0f / sectionNum));
+//        }
+
         if (list.size() > sectionNum) {
             list.remove(0);
         }
         list.add(data);
         int width = getMeasuredWidth();
         int size = list.size();
-        for (int i = 0; i < size; i++) {
+        for (int i = size - 1; i >= 0; i--) {
             PolylineBean item = list.get(i);
-            item.x = (int) (width * (i * 1.0f / sectionNum));
+            int diff = size - i - 1;
+            item.x = width * (1 - diff * 1.0f / sectionNum);
         }
     }
 
