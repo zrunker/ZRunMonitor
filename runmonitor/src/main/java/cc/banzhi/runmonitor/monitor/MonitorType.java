@@ -1,4 +1,4 @@
-package cc.banzhi.runmonitor.type;
+package cc.banzhi.runmonitor.monitor;
 
 import androidx.annotation.IntDef;
 

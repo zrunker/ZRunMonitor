@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Message;
 
+import cc.banzhi.runmonitor.dto.HandleEvent;
+
 /**
  * @program: ZRunMonitor
  * @description: MonitorExecutor代理类
@@ -36,16 +38,16 @@ public class MonitorExecutorProxy implements IExecutor {
     }
 
     @Override
-    public void run(Message msg) {
+    public <T> void execute(HandleEvent<T> event) {
         if (iExecutor != null) {
-            iExecutor.run(msg);
+            iExecutor.execute(event);
         }
     }
 
     @Override
-    public void runDelay(Message msg, long delayMillis) {
+    public <T> void executeDelay(HandleEvent<T> event, long delayMillis) {
         if (iExecutor != null) {
-            iExecutor.runDelay(msg, delayMillis);
+            iExecutor.executeDelay(event, delayMillis);
         }
     }
 }

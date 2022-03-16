@@ -18,7 +18,7 @@ public class RunMonitor {
      */
     public static void init(Context context) {
         if (context != null) {
-            MonitorExecutorProxy.getInstance().init(context);
+            MonitorExecutorProxy.getInstance().init(context.getApplicationContext());
         }
     }
 

@@ -3,7 +3,8 @@ package cc.banzhi.runmonitor.executor.handle;
 import java.util.HashMap;
 import java.util.Map;
 
-import cc.banzhi.runmonitor.type.MonitorType;
+import cc.banzhi.runmonitor.MonitorMap;
+import cc.banzhi.runmonitor.monitor.MonitorType;
 
 /**
  * @program: ZRunMonitor
@@ -32,11 +33,19 @@ public class HandleFactory {
     public AbsHandle get(@MonitorType int type) {
         AbsHandle absHandle = map.get(type);
         if (absHandle == null) {
-            switch (type) {
-                case MonitorType.MEMORY:
-                    absHandle = new MemoryHandle();
-                    map.put(MonitorType.MEMORY, absHandle);
-                    break;
+            MonitorMap.Item item = MonitorMap.map.get(type);
+            if (item != null) {
+                Class<? extends AbsHandle> clazz = item.clazz;
+                if (clazz != null) {
+                    try {
+                        absHandle = clazz.newInstance();
+                        map.put(type, absHandle);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         return absHandle;

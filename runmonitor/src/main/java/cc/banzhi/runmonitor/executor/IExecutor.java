@@ -1,6 +1,6 @@
 package cc.banzhi.runmonitor.executor;
 
-import android.os.Message;
+import cc.banzhi.runmonitor.dto.HandleEvent;
 
 /**
  * @program: ZRunMonitor
@@ -9,7 +9,7 @@ import android.os.Message;
  * @create: 2022/3/10 4:54 下午
  **/
 public interface IExecutor {
-    void run(Message msg);
+    <T> void execute(HandleEvent<T> event);
 
-    void runDelay(Message msg, long delayMillis);
+    <T> void executeDelay(HandleEvent<T> event, long delayMillis);
 }

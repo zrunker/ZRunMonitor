@@ -10,12 +10,12 @@ import android.widget.Toast;
 import java.util.Map;
 import java.util.Set;
 
-import cc.banzhi.runmonitor.dto.MessageResult;
+import cc.banzhi.runmonitor.MonitorMap;
+import cc.banzhi.runmonitor.dto.HandleEvent;
+import cc.banzhi.runmonitor.executor.handle.AbsHandle;
 import cc.banzhi.runmonitor.executor.handle.HandleFactory;
 import cc.banzhi.runmonitor.layer.MonitorLayer;
 import cc.banzhi.runmonitor.monitor.IMonitor;
-import cc.banzhi.runmonitor.monitor.MonitorPool;
-import cc.banzhi.runmonitor.type.MonitorType;
 import cc.banzhi.runmonitor.utils.SpUtil;
 
 /**
@@ -35,7 +35,6 @@ public class MonitorExecutor extends Thread implements IExecutor {
             Log.i("MonitorExecutor", "监视器初始化！");
             this.mContext = context.getApplicationContext();
             this.mLayer = new MonitorLayer(mContext);
-            this.mMainHandler = new Handler(Looper.getMainLooper());
             // TODO 测试
             SpUtil.clear(mContext);
             setName("RunMonitor");
@@ -44,47 +43,40 @@ public class MonitorExecutor extends Thread implements IExecutor {
     }
 
     /**
-     * 启动所有监视器
-     */
-    private void startMonitor() {
-        Map<Integer, IMonitor> map = MonitorPool.map;
-        if (map != null) {
-            Set<Map.Entry<Integer, IMonitor>> set = map.entrySet();
-            for (Map.Entry<Integer, IMonitor> entry : set) {
-                if (entry != null && entry.getValue() != null) {
-                    entry.getValue().monitor(mContext);
-                }
-            }
-        }
-    }
-
-    /**
      * 执行消息
      *
-     * @param msg 待执行消息
+     * @param event 待执行消息
      */
     @Override
-    public void run(Message msg) {
-        runDelay(msg, 0);
+    public <T> void execute(HandleEvent<T> event) {
+        executeDelay(event, 0);
     }
 
     /**
      * 延迟执行消息
      *
-     * @param msg         待执行消息
+     * @param event       待执行消息
      * @param delayMillis 延迟时长
      */
     @Override
-    public void runDelay(Message msg, long delayMillis) {
+    public <T> void executeDelay(HandleEvent<T> event, long delayMillis) {
         if (!isAlive() || isInterrupted()) {
             start();
         }
         if (mThreadHandler != null) {
-            mThreadHandler.sendMessageDelayed(msg, delayMillis);
+            mThreadHandler.sendMessageDelayed(createMessage(event), delayMillis);
         } else {
             Log.e("MonitorExecutor", "监视器未启动，或启动失败！");
             Toast.makeText(mContext, "启动监视器失败！", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private <T> Message createMessage(HandleEvent<T> event) {
+        Message msg = Message.obtain();
+        if (event != null) {
+            msg.obj = event;
+        }
+        return msg;
     }
 
     @Override
@@ -111,31 +103,54 @@ public class MonitorExecutor extends Thread implements IExecutor {
     }
 
     /**
+     * 启动所有监视器
+     */
+    private void startMonitor() {
+        Set<Map.Entry<Integer, MonitorMap.Item>> set = MonitorMap.map.entrySet();
+        for (Map.Entry<Integer, MonitorMap.Item> entry : set) {
+            if (entry != null && entry.getValue() != null) {
+                IMonitor iMonitor = entry.getValue().monitor;
+                if (iMonitor != null) {
+                    iMonitor.monitor(mContext);
+                }
+            }
+        }
+    }
+
+    /**
      * 执行消息
      *
      * @param msg 待执行消息
      */
     private void handle(Message msg) {
         if (msg != null && msg.obj != null) {
-            MessageResult<?> result = (MessageResult<?>) msg.obj;
-            switch (msg.what) {
-                case MonitorType.MEMORY:
-                    if (result.data != null) {
-                        Log.d("RunMonitor", result.data.toString());
-                        // 主线程执行
-                        this.mMainHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                HandleFactory.getInstance()
-                                        .get(MonitorType.MEMORY).handle(mContext, mLayer, result.data);
-                            }
-                        });
-                    }
-                    break;
+            HandleEvent<?> result = (HandleEvent<?>) msg.obj;
+            AbsHandle absHandle = HandleFactory.getInstance().get(result.monitorType);
+            if (absHandle != null) {
+                int threadType = result.threadType;
+                if (threadType == ThreadType.MAIN) {
+                    executeMainTask(() -> absHandle.handle(mContext, mLayer, result.data));
+                } else {
+                    absHandle.handle(mContext, mLayer, result.data);
+                }
             }
             if (result.callBack != null) {
-                result.callBack.onBack(MonitorType.MEMORY);
+                result.callBack.onBack(result.monitorType);
             }
+        }
+    }
+
+    /**
+     * 主线程执行任务
+     *
+     * @param runnable 待执行任务
+     */
+    private void executeMainTask(Runnable runnable) {
+        if (runnable != null) {
+            if (this.mMainHandler == null) {
+                this.mMainHandler = new Handler(Looper.getMainLooper());
+            }
+            this.mMainHandler.post(runnable);
         }
     }
 }

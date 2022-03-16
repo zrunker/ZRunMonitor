@@ -2,10 +2,13 @@ package cc.banzhi.runmonitor.layer.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
+import android.graphics.Shader;
 import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -22,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @program: ZRunMonitor
- * @description:
+ * @description: 折线图
  * @author: zoufengli01
  * @create: 2022/3/11 6:23 下午
  **/
@@ -34,9 +37,16 @@ public class PolylineView extends SurfaceView
     private boolean isCanDraw;
     /*Surface画布*/
     private Canvas mCanvas;
-    private Paint mPaint;
+    /*线条画笔*/
+    private Paint mLinePaint;
+    /*线条路径*/
+    private Path mLinePath;
+    /*阴影画笔*/
+    private Paint mShaderPaint;
+    /*阴影路径*/
+    private Path mShaderPath;
+    /*圆点画笔*/
     private Paint mCirclePaint;
-    private Path mPath;
 
     /*记录上一次绘制时间 ms*/
     private long preDrawTime;
@@ -60,22 +70,29 @@ public class PolylineView extends SurfaceView
         sHolder = getHolder();
         sHolder.setFormat(PixelFormat.TRANSPARENT);
         sHolder.addCallback(this);
-        // 初始化画笔
-        mPaint = new Paint();
-        mPaint.setAntiAlias(true);
-        mPaint.setStyle(Paint.Style.STROKE);
-        mPaint.setStrokeWidth(2);
-        mPaint.setStrokeCap(Paint.Cap.ROUND);
-        mPaint.setColor(0xFF40AFF2);
-        // 画圆点
+
+        // 线条画笔
+        mLinePaint = new Paint();
+        mLinePaint.setAntiAlias(true);
+        mLinePaint.setStyle(Paint.Style.STROKE);
+        mLinePaint.setStrokeWidth(5);
+        mLinePaint.setStrokeCap(Paint.Cap.ROUND);
+        mLinePaint.setColor(0xFF40AFF2);
+
+        // 阴影画笔
+        mShaderPaint = new Paint();
+        mShaderPaint.setAntiAlias(true);
+
+        // 圆点画笔
         mCirclePaint = new Paint();
         mCirclePaint.setAntiAlias(true);
         mCirclePaint.setStyle(Paint.Style.FILL);
-        mCirclePaint.setStrokeWidth(3);
+        mCirclePaint.setStrokeWidth(10);
         mCirclePaint.setStrokeCap(Paint.Cap.ROUND);
-        mCirclePaint.setColor(0xFFFFFFFF);
+        mCirclePaint.setColor(0xFF40AFF2);
 
-        mPath = new Path();
+        mLinePath = new Path();
+        mShaderPath = new Path();
     }
 
     @Override
@@ -117,23 +134,9 @@ public class PolylineView extends SurfaceView
                     // 清屏
                     mCanvas.drawColor(PixelFormat.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-                    // 画折线图
-                    mPath.reset();
-                    PolylineBean firstItem = cList.get(0);
-                    mPath.moveTo(firstItem.x, firstItem.y);
-                    // 处理集合
-                    Iterator<PolylineBean> iterator = cList.iterator();
-                    while (iterator.hasNext()) {
-                        PolylineBean item = iterator.next();
-                        if (item == null) {
-                            iterator.remove();
-                        } else {
-                            mPath.lineTo(item.x, item.y);
-                            // 绘制圆点
-                            mCanvas.drawCircle(item.x, item.y, 5, mCirclePaint);
-                        }
-                    }
-                    mCanvas.drawPath(mPath, mPaint);
+                    drawShader(cList);
+                    drawLine(cList);
+                    drawCircle(cList);
                 }
             }
         } catch (Exception e) {
@@ -146,7 +149,77 @@ public class PolylineView extends SurfaceView
         }
     }
 
-    // 保存地址集合
+    // 绘制圆点
+    private void drawCircle(List<PolylineBean> list) {
+        Iterator<PolylineBean> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            PolylineBean item = iterator.next();
+            if (item == null) {
+                iterator.remove();
+            } else {
+                mCanvas.drawCircle(item.x, item.y, 10, mCirclePaint);
+            }
+        }
+    }
+
+    // 画折线图
+    private void drawLine(List<PolylineBean> list) {
+        mLinePath.reset();
+        PolylineBean firstItem = list.get(0);
+        mLinePath.moveTo(firstItem.x, firstItem.y);
+        Iterator<PolylineBean> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            PolylineBean item = iterator.next();
+            if (item == null) {
+                iterator.remove();
+            } else {
+                mLinePath.lineTo(item.x, item.y);
+            }
+        }
+        mCanvas.drawPath(mLinePath, mLinePaint);
+    }
+
+    // 画阴影
+    private void drawShader(List<PolylineBean> list) {
+        mShaderPath.reset();
+        PolylineBean firstItem = list.get(0);
+        mShaderPath.moveTo(firstItem.x, getMeasuredHeight());
+        Iterator<PolylineBean> iterator = list.iterator();
+        while (iterator.hasNext()) {
+            PolylineBean item = iterator.next();
+            if (item == null) {
+                iterator.remove();
+            } else {
+                mShaderPath.lineTo(item.x, item.y);
+            }
+        }
+        mShaderPath.lineTo(list.get(list.size() - 1).x, getMeasuredHeight());
+        mShaderPath.lineTo(firstItem.x, getMeasuredHeight());
+        mShaderPath.close();
+
+        mShaderPaint.setStyle(Paint.Style.FILL);
+        mShaderPaint.setShader(getShader());
+        mCanvas.drawPath(mShaderPath, mShaderPaint);
+    }
+
+    // 获取Shader
+    private Shader getShader() {
+        int[] shadeColors = new int[]{
+                Color.argb(150, 32, 208, 88),
+                Color.argb(100, 234, 115, 9),
+                Color.argb(200, 250, 49, 33)
+        };
+        return new LinearGradient(
+                getMeasuredWidth() / 2.0f,
+                getMeasuredHeight(),
+                getMeasuredWidth() / 2.0f,
+                0f,
+                shadeColors,
+                null,
+                Shader.TileMode.REPEAT);
+    }
+
+    // 保存坐标集合
     private final List<PolylineBean> list = new CopyOnWriteArrayList<>();
 
     public synchronized void addPolyline(PolylineBean data) {
