@@ -29,6 +29,7 @@ public class MonitorExecutor extends Thread implements IExecutor {
     private Handler mThreadHandler;
     private MonitorLayer mLayer;
     private Handler mMainHandler;
+    private final int WHAT = 111;
 
     public MonitorExecutor(Context context) {
         if (context != null) {
@@ -71,8 +72,16 @@ public class MonitorExecutor extends Thread implements IExecutor {
         }
     }
 
+    @Override
+    public <T> void removeEvent(HandleEvent<T> event) {
+        if (mThreadHandler != null) {
+            mThreadHandler.removeMessages(WHAT, event);
+        }
+    }
+
     private <T> Message createMessage(HandleEvent<T> event) {
         Message msg = Message.obtain();
+        msg.what = WHAT;
         if (event != null) {
             msg.obj = event;
         }
@@ -97,7 +106,7 @@ public class MonitorExecutor extends Thread implements IExecutor {
                     handle(msg);
                 }
             };
-            Log.i("MonitorExecutor", "执行全部监视功能！");
+            Log.i("MonitorExecutor", "执行全部监视功能...");
             startMonitor();
         }
     }
@@ -125,32 +134,20 @@ public class MonitorExecutor extends Thread implements IExecutor {
     private void handle(Message msg) {
         if (msg != null && msg.obj != null) {
             HandleEvent<?> result = (HandleEvent<?>) msg.obj;
-            AbsHandle absHandle = HandleFactory.getInstance().get(result.monitorType);
+            if (mLayer == null) {
+                mLayer = new MonitorLayer(mContext);
+            }
+            if (mMainHandler == null) {
+                mMainHandler = new Handler(Looper.getMainLooper());
+            }
+            AbsHandle absHandle = HandleFactory.getInstance()
+                    .get(result.monitorType, mContext, mLayer, mMainHandler);
             if (absHandle != null) {
-                int threadType = result.threadType;
-                if (threadType == ThreadType.MAIN) {
-                    executeMainTask(() -> absHandle.handle(mContext, mLayer, result.data));
-                } else {
-                    absHandle.handle(mContext, mLayer, result.data);
-                }
+                absHandle.handle(result.data);
             }
             if (result.callBack != null) {
                 result.callBack.onBack(result.monitorType);
             }
-        }
-    }
-
-    /**
-     * 主线程执行任务
-     *
-     * @param runnable 待执行任务
-     */
-    private void executeMainTask(Runnable runnable) {
-        if (runnable != null) {
-            if (this.mMainHandler == null) {
-                this.mMainHandler = new Handler(Looper.getMainLooper());
-            }
-            this.mMainHandler.post(runnable);
         }
     }
 }

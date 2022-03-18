@@ -9,4 +9,10 @@ package cc.banzhi.runmonitor.dto;
 public class Constants {
     // 内存监控开关KEY
     public static String IS_OPEN_MEMORY_KEY = "is_open_memory_key";
+
+    // 主线程Handler监控开关KEY
+    public static String IS_OPEN_MAIN_KEY = "is_open_main_key";
+
+    // 主线程执行时长阀值
+    public static long MAIN_HANDLER_TIME = 4000;
 }

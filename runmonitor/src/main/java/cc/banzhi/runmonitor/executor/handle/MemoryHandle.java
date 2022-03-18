@@ -1,6 +1,7 @@
 package cc.banzhi.runmonitor.executor.handle;
 
 import android.content.Context;
+import android.os.Handler;
 
 import cc.banzhi.runmonitor.dto.Constants;
 import cc.banzhi.runmonitor.dto.MemoryBean;
@@ -17,35 +18,42 @@ import cc.banzhi.runmonitor.utils.SpUtil;
 public class MemoryHandle extends AbsHandle {
     private MemoryView mMemoryView;
 
+    public MemoryHandle(Context context, MonitorLayer layer, Handler mainHandler) {
+        super(context, layer, mainHandler);
+    }
+
     @Override
-    public <T> void handle(Context context, MonitorLayer layer, T data) {
-        if (context != null) {
-            if (SpUtil.getBoolean(context, Constants.IS_OPEN_MEMORY_KEY, true)) {
+    public <T> void handle(T data) {
+        if (mContext == null || data == null) {
+            return;
+        }
+        Runnable runnable = () -> {
+            if (SpUtil.getBoolean(mContext, Constants.IS_OPEN_MEMORY_KEY, true)) {
                 if (mMemoryView == null) {
-                    mMemoryView = new MemoryView(context);
+                    mMemoryView = new MemoryView(mContext);
                     mMemoryView.setListener(new MemoryView.ClickListener() {
                         @Override
                         public void onClose() {
-                            if (layer != null) {
-                                layer.hide();
+                            if (mLayer != null) {
+                                mLayer.hide();
                             }
-                            SpUtil.putBoolean(context, Constants.IS_OPEN_MEMORY_KEY, false);
+                            SpUtil.putBoolean(mContext, Constants.IS_OPEN_MEMORY_KEY, false);
                         }
                     });
                 }
                 if (data instanceof MemoryBean) {
                     mMemoryView.onBind((MemoryBean) data);
                 }
-                if (layer != null) {
-                    layer.addView(mMemoryView);
-                    layer.show();
+                if (mLayer != null) {
+                    mLayer.addView(mMemoryView);
+                    mLayer.show();
                 }
             } else {
-                if (layer != null) {
-                    layer.hide();
+                if (mLayer != null) {
+                    mLayer.hide();
                 }
             }
-        }
+        };
+        mMainHandler.post(runnable);
     }
-
 }

@@ -12,4 +12,6 @@ public interface IExecutor {
     <T> void execute(HandleEvent<T> event);
 
     <T> void executeDelay(HandleEvent<T> event, long delayMillis);
+
+    <T> void removeEvent(HandleEvent<T> event);
 }

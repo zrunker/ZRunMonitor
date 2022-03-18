@@ -6,7 +6,6 @@ import cc.banzhi.runmonitor.dto.Constants;
 import cc.banzhi.runmonitor.dto.HandleEvent;
 import cc.banzhi.runmonitor.dto.MemoryBean;
 import cc.banzhi.runmonitor.executor.MonitorExecutorProxy;
-import cc.banzhi.runmonitor.executor.ThreadType;
 import cc.banzhi.runmonitor.monitor.IMonitor;
 import cc.banzhi.runmonitor.monitor.IMonitorCallBack;
 import cc.banzhi.runmonitor.monitor.MonitorType;
@@ -26,7 +25,6 @@ public class MemoryMonitor implements IMonitor {
                 SpUtil.getBoolean(context, Constants.IS_OPEN_MEMORY_KEY, true)) {
             HandleEvent<MemoryBean> event = new HandleEvent<>(
                     MonitorType.MEMORY,
-                    ThreadType.MAIN,
                     MemoryUtil.getMemoryInfo(context),
                     new IMonitorCallBack() {
                         @Override

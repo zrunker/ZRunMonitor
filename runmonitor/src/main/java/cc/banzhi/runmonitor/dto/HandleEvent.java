@@ -1,6 +1,5 @@
 package cc.banzhi.runmonitor.dto;
 
-import cc.banzhi.runmonitor.executor.ThreadType;
 import cc.banzhi.runmonitor.monitor.IMonitorCallBack;
 import cc.banzhi.runmonitor.monitor.MonitorType;
 
@@ -13,17 +12,8 @@ import cc.banzhi.runmonitor.monitor.MonitorType;
 public class HandleEvent<T> {
     @MonitorType
     public int monitorType;
-    @ThreadType
-    public int threadType = ThreadType.THREAD;
     public T data;
     public IMonitorCallBack callBack;
-
-    public HandleEvent(int monitorType, int threadType, T data, IMonitorCallBack callBack) {
-        this.monitorType = monitorType;
-        this.threadType = threadType;
-        this.data = data;
-        this.callBack = callBack;
-    }
 
     public HandleEvent(int monitorType, T data, IMonitorCallBack callBack) {
         this.monitorType = monitorType;
@@ -44,7 +34,6 @@ public class HandleEvent<T> {
     public String toString() {
         return "HandleEvent{" +
                 "monitorType=" + monitorType +
-                ", threadType=" + threadType +
                 ", data=" + data +
                 ", callBack=" + callBack +
                 '}';

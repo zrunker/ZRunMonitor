@@ -1,6 +1,7 @@
 package cc.banzhi.runmonitor.executor.handle;
 
 import android.content.Context;
+import android.os.Handler;
 
 import cc.banzhi.runmonitor.layer.MonitorLayer;
 
@@ -11,6 +12,15 @@ import cc.banzhi.runmonitor.layer.MonitorLayer;
  * @create: 2022/3/11 11:38 上午
  **/
 public abstract class AbsHandle {
+    protected Context mContext;
+    protected MonitorLayer mLayer;
+    protected Handler mMainHandler;
 
-    public abstract <T> void handle(Context context, MonitorLayer layer, T data);
+    public AbsHandle(Context context, MonitorLayer layer, Handler mainHandler) {
+        this.mContext = context;
+        this.mLayer = layer;
+        this.mMainHandler = mainHandler;
+    }
+
+    public abstract <T> void handle(T data);
 }

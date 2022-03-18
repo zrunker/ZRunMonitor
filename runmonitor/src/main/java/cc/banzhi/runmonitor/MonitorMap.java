@@ -6,9 +6,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import cc.banzhi.runmonitor.executor.handle.AbsHandle;
+import cc.banzhi.runmonitor.executor.handle.MainHandle;
 import cc.banzhi.runmonitor.executor.handle.MemoryHandle;
 import cc.banzhi.runmonitor.monitor.IMonitor;
 import cc.banzhi.runmonitor.monitor.MonitorType;
+import cc.banzhi.runmonitor.monitor.main.MainMonitor;
 import cc.banzhi.runmonitor.monitor.memory.MemoryMonitor;
 
 /**
@@ -23,6 +25,7 @@ public class MonitorMap {
     // 注册清单
     static {
         map.put(MonitorType.MEMORY, new Item(new MemoryMonitor(), MemoryHandle.class));
+        map.put(MonitorType.MAIN, new Item(new MainMonitor(), MainHandle.class));
     }
 
     public static class Item {

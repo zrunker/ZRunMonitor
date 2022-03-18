@@ -1,9 +1,14 @@
 package cc.banzhi.runmonitor.executor.handle;
 
+import android.content.Context;
+import android.os.Handler;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
 import cc.banzhi.runmonitor.MonitorMap;
+import cc.banzhi.runmonitor.layer.MonitorLayer;
 import cc.banzhi.runmonitor.monitor.MonitorType;
 
 /**
@@ -30,7 +35,8 @@ public class HandleFactory {
         return instance;
     }
 
-    public AbsHandle get(@MonitorType int type) {
+    public AbsHandle get(@MonitorType int type,
+                         Context context, MonitorLayer layer, Handler mainHandler) {
         AbsHandle absHandle = map.get(type);
         if (absHandle == null) {
             MonitorMap.Item item = MonitorMap.map.get(type);
@@ -38,11 +44,19 @@ public class HandleFactory {
                 Class<? extends AbsHandle> clazz = item.clazz;
                 if (clazz != null) {
                     try {
-                        absHandle = clazz.newInstance();
+                        absHandle = clazz.getConstructor(
+                                Context.class,
+                                MonitorLayer.class,
+                                Handler.class)
+                                .newInstance(context, layer, mainHandler);
                         map.put(type, absHandle);
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();
                     } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
                         e.printStackTrace();
                     }
                 }

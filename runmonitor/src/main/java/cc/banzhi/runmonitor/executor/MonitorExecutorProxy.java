@@ -2,7 +2,6 @@ package cc.banzhi.runmonitor.executor;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.os.Message;
 
 import cc.banzhi.runmonitor.dto.HandleEvent;
 
@@ -48,6 +47,13 @@ public class MonitorExecutorProxy implements IExecutor {
     public <T> void executeDelay(HandleEvent<T> event, long delayMillis) {
         if (iExecutor != null) {
             iExecutor.executeDelay(event, delayMillis);
+        }
+    }
+
+    @Override
+    public <T> void removeEvent(HandleEvent<T> event) {
+        if (iExecutor != null) {
+            iExecutor.removeEvent(event);
         }
     }
 }

@@ -8,7 +8,8 @@ import androidx.annotation.IntDef;
  * @author: zoufengli01
  * @create: 2022/3/10 6:40 下午
  **/
-@IntDef({MonitorType.MEMORY})
+@IntDef({MonitorType.MEMORY, MonitorType.MAIN})
 public @interface MonitorType {
     int MEMORY = 1;
+    int MAIN = 2;
 }
